@@ -113,7 +113,7 @@
     <!-- Firebase SDK and Application Logic -->
     <script type="module">
         import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, collection, query } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
         // Set Firebase log level for debugging purposes.
@@ -342,4 +342,5 @@
     </script>
 </body>
 </html>
+
 
