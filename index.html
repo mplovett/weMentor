@@ -1,12 +1,4 @@
 <!DOCTYPE html>
-<!-- Add this Google Sign-In button -->
-<button id="google-sign-in-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-4">
-    Sign In with Google
-</button>
-<button id="sign-out-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 mt-2 hidden">
-    Sign Out
-</button>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -21,10 +13,10 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
+            align-items: center;
             padding: 2rem;
         }
-        .app-container {
+        .auth-container, .app-container {
             background-color: #fff;
             padding: 2rem;
             border-radius: 1rem;
@@ -49,15 +41,58 @@
 </head>
 <body>
 
-    <div class="app-container">
+    <!-- Main Authentication Container (visible before sign-in) -->
+    <div id="auth-container" class="auth-container hidden">
+        <div class="col-span-full text-center mb-4">
+            <h1 class="text-4xl font-extrabold text-gray-800 mb-2">weMentor</h1>
+            <p id="auth-status-message" class="text-lg text-gray-700 mb-4">Sign in to get started</p>
+        </div>
+
+        <!-- Email/Password Sign-In Form -->
+        <div class="profile-section flex flex-col items-center">
+            <h2 id="auth-title" class="text-2xl font-bold mb-4 text-gray-800">Sign In</h2>
+            <form id="email-auth-form" class="space-y-4 w-full">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="email" name="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="password" name="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                </div>
+                <div id="auth-validation-message" class="text-sm text-red-500 text-center font-bold"></div>
+                <button type="submit" id="auth-submit-button" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Sign In
+                </button>
+            </form>
+            <button id="toggle-auth-mode" class="mt-4 text-sm text-indigo-600 hover:text-indigo-800">Need an account? Sign Up</button>
+        </div>
+
+        <!-- Google Sign-In Section -->
+        <div class="profile-section flex flex-col items-center justify-center">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Or</h2>
+            <button id="google-auth-button" class="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.2c0-.75-.06-1.5-.18-2.22H12v4.16h5.81c-.24 1.48-1.03 2.73-2.27 3.56v2.7h3.45a9.125 9.125 0 0 0 3.07-7.2zm-10.56 6.8c-2.45 0-4.52-1.65-5.27-3.89h-3.9v3.08a8.944 8.944 0 0 0 8.87 6.8v-6.04zm-8.8-11.4c.75-2.24 2.82-3.89 5.27-3.89v-6.04a8.944 8.944 0 0 0-8.87 6.8h3.9zm1.74 3.7c-.52 1.55-.52 3.19 0 4.74h-3.9a8.944 8.944 0 0 0 0-9.48h3.9z"/>
+                </svg>
+                Sign in with Google
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Application Container (visible after sign-in) -->
+    <div id="app-container" class="app-container hidden">
         <!-- Status and User Info Section -->
         <div class="col-span-full text-center mb-4">
             <h1 class="text-4xl font-extrabold text-gray-800 mb-2">weMentor</h1>
-            <p id="status-message" class="text-lg text-gray-700 mb-4">Initializing Firebase...</p>
+            <p id="status-message" class="text-lg text-gray-700 mb-4">Loading user profile...</p>
             <div class="bg-gray-100 p-3 rounded-md border border-gray-200">
                 <h2 class="text-md font-semibold text-gray-600">Your User ID:</h2>
                 <p id="user-id" class="text-sm text-gray-500 mt-1 font-mono break-all"></p>
             </div>
+            <button id="sign-out-button" class="mt-4 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                Sign Out
+            </button>
         </div>
 
         <!-- User Profile Form Section -->
@@ -93,7 +128,7 @@
                     <label for="skills" class="block text-sm font-medium text-gray-700">Skills/Interests (comma-separated)</label>
                     <input type="text" id="skills" name="skills" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="e.g., JavaScript, React, design, marketing">
                 </div>
-                <div id="validation-message" class="text-sm text-red-500 text-center font-bold"></div>
+                <div id="profile-validation-message" class="text-sm text-red-500 text-center font-bold"></div>
                 <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     Save Profile
                 </button>
@@ -113,117 +148,63 @@
     <!-- Firebase SDK and Application Logic -->
     <script type="module">
         import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js"; // <-- Updated import
-import { getFirestore, doc, setDoc, onSnapshot, collection, query } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-
-// ... (your firebaseConfig and other variable definitions) ...
-
-const googleSignInBtn = document.getElementById('google-sign-in-btn');
-const signOutBtn = document.getElementById('sign-out-btn');
-const provider = new GoogleAuthProvider(); // Define the Google Auth Provider
-
-window.onload = async function() {
-    try {
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-
-        statusMessageElement.textContent = "Firebase initialized. Awaiting sign-in...";
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                userId = user.uid;
-                statusMessageElement.textContent = "Signed in successfully!";
-                userIdElement.textContent = userId;
-                googleSignInBtn.classList.add('hidden'); // Hide sign-in button
-                signOutBtn.classList.remove('hidden'); // Show sign-out button
-                console.log("User signed in with ID:", userId);
-
-                startListeningForProfiles();
-
-                const userDocRef = doc(db, 'mentorship-profiles', userId);
-                onSnapshot(userDocRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        document.getElementById('firstName').value = data.firstName || '';
-                        document.getElementById('lastName').value = data.lastName || '';
-                        document.getElementById('dob').value = data.dob || '';
-                        document.getElementById('role').value = data.role || '';
-                        document.getElementById('skills').value = data.skills ? data.skills.join(', ') : '';
-                        handleRoleChange();
-                        document.getElementById('role-description').value = data.roleDescription || '';
-                    }
-                });
-
-            } else {
-                statusMessageElement.textContent = "Signed out or not signed in.";
-                userIdElement.textContent = "No user authenticated.";
-                googleSignInBtn.classList.remove('hidden'); // Show sign-in button
-                signOutBtn.classList.add('hidden'); // Hide sign-out button
-                console.log("User signed out.");
-                profileForm.reset();
-                usersList.innerHTML = `<p id="no-users-message" class="text-gray-500 text-center italic">Please sign in to view profiles.</p>`;
-            }
-        });
-
-        // Event listener for Google Sign-In button
-        googleSignInBtn.addEventListener('click', async () => {
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (error) {
-                statusMessageElement.textContent = `Sign-in Error: ${error.message}`;
-                console.error("Google Sign-in Error:", error);
-            }
-        });
-
-        // Event listener for Sign-Out button
-        signOutBtn.addEventListener('click', async () => {
-            try {
-                await signOut(auth);
-            } catch (error) {
-                statusMessageElement.textContent = `Sign-out Error: ${error.message}`;
-                console.error("Sign-out Error:", error);
-            }
-        });
-
-    } catch (error) {
-        statusMessageElement.textContent = `Error: ${error.message}`;
-        console.error("Firebase Initialization Error:", error);
-    }
-};
-
-// ... (rest of your profileForm event listener and functions) ...
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            GoogleAuthProvider, 
+            signInWithPopup, 
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
         // Set Firebase log level for debugging purposes.
         setLogLevel('debug');
 
-        // Your web app's Firebase configuration
+        // --- PASTE YOUR FIREBASE CONFIGURATION HERE ---
+        // You can find this in your Firebase Project Settings under "Your apps".
+        // Make sure to enable the Auth and Firestore services for your project.
         const firebaseConfig = {
-            apiKey: "AIzaSyApkQJrJHsSRjd9tC2x21EdN_2IqWYKRxQ",
-            authDomain: "wementor-app-cfce5.firebaseapp.com",
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
             projectId: "wementor-app-cfce5",
-            storageBucket: "wementor-app-cfce5.firebasestorage.app",
-            messagingSenderId: "31838724730",
-            appId: "1:31838724730:web:3184b080194938a11751c3",
-            measurementId: "G-5WRHES5F65"
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
+        // ---------------------------------------------
         
+        const appId = firebaseConfig.projectId;
+
+        // Firebase service instances
         let app;
         let auth;
         let db;
         let userId;
 
-        // Get references to the HTML elements
+        // Get references to the HTML elements for both auth and app sections
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
         const statusMessageElement = document.getElementById('status-message');
         const userIdElement = document.getElementById('user-id');
         const profileForm = document.getElementById('profile-form');
         const usersList = document.getElementById('users-list');
         const noUsersMessage = document.getElementById('no-users-message');
-        const validationMessageElement = document.getElementById('validation-message');
+        const profileValidationMessageElement = document.getElementById('profile-validation-message');
         const roleSelect = document.getElementById('role');
         const roleDescriptionContainer = document.getElementById('role-description-container');
         const roleDescriptionLabel = document.getElementById('role-description-label');
         const roleDescriptionInput = document.getElementById('role-description');
+        const emailAuthForm = document.getElementById('email-auth-form');
+        const authValidationMessageElement = document.getElementById('auth-validation-message');
+        const authTitle = document.getElementById('auth-title');
+        const authSubmitButton = document.getElementById('auth-submit-button');
+        const toggleAuthModeButton = document.getElementById('toggle-auth-mode');
+        const googleAuthButton = document.getElementById('google-auth-button');
+        const signOutButton = document.getElementById('sign-out-button');
+        
+        let isSignInMode = true;
 
         // Function to handle the visibility and content of the conditional role description field
         function handleRoleChange() {
@@ -247,7 +228,63 @@ window.onload = async function() {
         
         // Listen for changes on the role dropdown
         roleSelect.addEventListener('change', handleRoleChange);
+        
+        // Listen for auth mode toggle
+        toggleAuthModeButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            isSignInMode = !isSignInMode;
+            if (isSignInMode) {
+                authTitle.textContent = 'Sign In';
+                authSubmitButton.textContent = 'Sign In';
+                toggleAuthModeButton.textContent = 'Need an account? Sign Up';
+            } else {
+                authTitle.textContent = 'Sign Up';
+                authSubmitButton.textContent = 'Sign Up';
+                toggleAuthModeButton.textContent = 'Already have an account? Sign In';
+            }
+        });
 
+        // Handle email/password form submission
+        emailAuthForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            authValidationMessageElement.textContent = 'Processing...';
+
+            try {
+                if (isSignInMode) {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } else {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                }
+                authValidationMessageElement.textContent = 'Success!';
+            } catch (error) {
+                authValidationMessageElement.textContent = `Error: ${error.message}`;
+                console.error("Auth Error:", error);
+            }
+        });
+
+        // Handle Google sign-in
+        googleAuthButton.addEventListener('click', async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                authValidationMessageElement.textContent = `Error: ${error.message}`;
+                console.error("Google Auth Error:", error);
+            }
+        });
+
+        // Handle sign-out
+        signOutButton.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Sign Out Error:", error);
+            }
+        });
+
+        // The main application startup function
         window.onload = async function() {
             try {
                 // Initialize Firebase services
@@ -255,11 +292,13 @@ window.onload = async function() {
                 auth = getAuth(app);
                 db = getFirestore(app);
 
-                statusMessageElement.textContent = "Firebase initialized. Signing in...";
-
                 // This listener will fire whenever the user's sign-in state changes.
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
+                        // User is signed in. Hide auth UI and show app UI.
+                        authContainer.classList.add('hidden');
+                        appContainer.classList.remove('hidden');
+
                         userId = user.uid;
                         statusMessageElement.textContent = "Signed in successfully!";
                         userIdElement.textContent = userId;
@@ -269,8 +308,7 @@ window.onload = async function() {
                         startListeningForProfiles();
                         
                         // Check if a profile already exists for the current user and pre-fill the form
-                        // The collection path is now simplified
-                        const userDocRef = doc(db, 'mentorship-profiles', userId);
+                        const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/profiles`, userId);
                         onSnapshot(userDocRef, (docSnap) => {
                             if (docSnap.exists()) {
                                 const data = docSnap.data();
@@ -279,25 +317,25 @@ window.onload = async function() {
                                 document.getElementById('dob').value = data.dob || '';
                                 document.getElementById('role').value = data.role || '';
                                 document.getElementById('skills').value = data.skills ? data.skills.join(', ') : '';
-                                
-                                // Manually trigger the role change to show the correct description field
                                 handleRoleChange();
                                 document.getElementById('role-description').value = data.roleDescription || '';
                             }
                         });
 
                     } else {
+                        // User is signed out. Show auth UI and hide app UI.
+                        appContainer.classList.add('hidden');
+                        authContainer.classList.remove('hidden');
+
                         statusMessageElement.textContent = "Signed out or not signed in.";
                         userIdElement.textContent = "No user authenticated.";
                         console.log("User signed out.");
+                        
                         // Clear the UI when the user is signed out
                         profileForm.reset();
                         usersList.innerHTML = `<p id="no-users-message" class="text-gray-500 text-center italic">Please sign in to view profiles.</p>`;
                     }
                 });
-
-                // Sign in anonymously. This is a simple authentication method for public apps.
-                await signInAnonymously(auth);
 
             } catch (error) {
                 statusMessageElement.textContent = `Error: ${error.message}`;
@@ -322,7 +360,7 @@ window.onload = async function() {
             e.preventDefault();
             if (!userId) {
                 console.error("User not authenticated.");
-                validationMessageElement.textContent = "You must be signed in to save your profile.";
+                profileValidationMessageElement.textContent = "You must be signed in to save your profile.";
                 return;
             }
 
@@ -335,19 +373,19 @@ window.onload = async function() {
             const roleDescription = document.getElementById('role-description').value;
 
             // Age verification
-            validationMessageElement.textContent = ''; // Clear previous messages
+            profileValidationMessageElement.textContent = ''; // Clear previous messages
             const age = calculateAge(dob);
 
             if (role === 'mentor' && age < 25) {
-                validationMessageElement.textContent = 'You must be at least 25 years old to be a mentor.';
+                profileValidationMessageElement.textContent = 'You must be at least 25 years old to be a mentor.';
                 return;
             }
             if (role === 'mentee_18_plus' && age < 18) {
-                validationMessageElement.textContent = 'You must be at least 18 years old to sign up as a mentee.';
+                profileValidationMessageElement.textContent = 'You must be at least 18 years old to sign up as a mentee.';
                 return;
             }
             if (role === 'parent_of_mentee' && age < 18) {
-                validationMessageElement.textContent = 'You must be at least 18 years old to sign up as a parent.';
+                profileValidationMessageElement.textContent = 'You must be at least 18 years old to sign up as a parent.';
                 return;
             }
 
@@ -363,12 +401,12 @@ window.onload = async function() {
                 lastUpdated: new Date().toISOString()
             };
 
-            // The collection path is now simplified
-            const userDocRef = doc(db, 'mentorship-profiles', userId);
+            // The collection path is now private and user-specific as per best practices
+            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/profiles`, userId);
             try {
                 await setDoc(userDocRef, profileData);
+                profileValidationMessageElement.textContent = '';
                 statusMessageElement.textContent = "Profile saved successfully!";
-                validationMessageElement.textContent = ''; // Clear any success messages
                 console.log("Profile saved for user:", userId);
             } catch (e) {
                 statusMessageElement.textContent = `Error saving profile: ${e.message}`;
@@ -378,8 +416,8 @@ window.onload = async function() {
 
         // Function to listen for real-time updates to the mentorship-profiles collection.
         function startListeningForProfiles() {
-            // The collection path is now simplified
-            const profilesCollectionRef = collection(db, 'mentorship-profiles');
+            // The collection path is now public for sharing
+            const profilesCollectionRef = collection(db, `artifacts/${appId}/public/data/profiles`);
             const q = query(profilesCollectionRef);
 
             onSnapshot(q, (querySnapshot) => {
@@ -420,6 +458,3 @@ window.onload = async function() {
     </script>
 </body>
 </html>
-
-
-
