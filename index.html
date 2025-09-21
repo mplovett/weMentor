@@ -187,7 +187,7 @@
 
     <!-- Firebase SDK and Application Logic -->
     <script type="module">
-        import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
             getAuth, 
             onAuthStateChanged, 
@@ -195,28 +195,18 @@
             signInWithEmailAndPassword, 
             GoogleAuthProvider, 
             signInWithPopup, 
-            signOut 
-        } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
+            signOut,
+            signInWithCustomToken,
+            signInAnonymously
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-        // Set Firebase log level for debugging purposes.
-        setLogLevel('debug');
-
-        // --- PASTE YOUR FIREBASE CONFIGURATION HERE ---
-        // You can find this in your Firebase Project Settings under "Your apps".
-        // Make sure to enable the Auth and Firestore services for your project.
-        const firebaseConfig = {
-            apiKey: "AIzaSyApkQJrJHsSRjd9tC2x21EdN_2IqWYKRxQ",
-            authDomain: "wementor-app-cfce5.firebaseapp.com",
-            projectId: "wementor-app-cfce5",
-            storageBucket: "wementor-app-cfce5.appspot.com",
-            messagingSenderId: "31838724730",
-            appId: "1:31838724730:web:3184b080194938a11751c3"
-        };
-        // ---------------------------------------------
-        
-        const appId = firebaseConfig.projectId;
+        // IMPORTANT: This configuration is automatically provided by the collaborative environment.
+        // It's used to initialize Firebase with the correct settings and authenticate the user.
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // Firebase service instances
         let app;
@@ -347,6 +337,14 @@
                 auth = getAuth(app);
                 db = getFirestore(app);
                 storage = getStorage(app);
+                
+                // Sign in the user with the provided token or anonymously if not available.
+                // This is crucial for seamless app functionality in the collaborative environment.
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
 
                 // This listener will fire whenever the user's sign-in state changes.
                 onAuthStateChanged(auth, async (user) => {
@@ -523,6 +521,7 @@
                     };
                 }
 
+                // Save to private and public collections based on our security rules.
                 const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/profiles`, userId);
                 const publicDocRef = doc(db, `artifacts/${appId}/public/data/profiles`, userId);
 
