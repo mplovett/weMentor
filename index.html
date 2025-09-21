@@ -108,8 +108,15 @@
 
        // IMPORTANT: These global variables are provided by the environment
        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-       const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-       const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+const firebaseConfig = {
+  apiKey: "AIzaSyApkQJrJHsSRjd9tC2x21EdN_2IqWYKRxQ",
+  authDomain: "wementor-app-cfce5.firebaseapp.com",
+  projectId: "wementor-app-cfce5",
+  storageBucket: "wementor-app-cfce5.firebasestorage.app",
+  messagingSenderId: "31838724730",
+  appId: "1:31838724730:web:3184b080194938a11751c3",
+  measurementId: "G-5WRHES5F65"
+};       const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
 
        // --- Firebase Initialization ---
@@ -689,4 +696,5 @@
        initializeFirebase();
    </script>
 </body>
+
 </html>
