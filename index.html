@@ -113,8 +113,86 @@
     <!-- Firebase SDK and Application Logic -->
     <script type="module">
         import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js"; // <-- Updated import
+import { getFirestore, doc, setDoc, onSnapshot, collection, query } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+// ... (your firebaseConfig and other variable definitions) ...
+
+const googleSignInBtn = document.getElementById('google-sign-in-btn');
+const signOutBtn = document.getElementById('sign-out-btn');
+const provider = new GoogleAuthProvider(); // Define the Google Auth Provider
+
+window.onload = async function() {
+    try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        statusMessageElement.textContent = "Firebase initialized. Awaiting sign-in...";
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                statusMessageElement.textContent = "Signed in successfully!";
+                userIdElement.textContent = userId;
+                googleSignInBtn.classList.add('hidden'); // Hide sign-in button
+                signOutBtn.classList.remove('hidden'); // Show sign-out button
+                console.log("User signed in with ID:", userId);
+
+                startListeningForProfiles();
+
+                const userDocRef = doc(db, 'mentorship-profiles', userId);
+                onSnapshot(userDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        document.getElementById('firstName').value = data.firstName || '';
+                        document.getElementById('lastName').value = data.lastName || '';
+                        document.getElementById('dob').value = data.dob || '';
+                        document.getElementById('role').value = data.role || '';
+                        document.getElementById('skills').value = data.skills ? data.skills.join(', ') : '';
+                        handleRoleChange();
+                        document.getElementById('role-description').value = data.roleDescription || '';
+                    }
+                });
+
+            } else {
+                statusMessageElement.textContent = "Signed out or not signed in.";
+                userIdElement.textContent = "No user authenticated.";
+                googleSignInBtn.classList.remove('hidden'); // Show sign-in button
+                signOutBtn.classList.add('hidden'); // Hide sign-out button
+                console.log("User signed out.");
+                profileForm.reset();
+                usersList.innerHTML = `<p id="no-users-message" class="text-gray-500 text-center italic">Please sign in to view profiles.</p>`;
+            }
+        });
+
+        // Event listener for Google Sign-In button
+        googleSignInBtn.addEventListener('click', async () => {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                statusMessageElement.textContent = `Sign-in Error: ${error.message}`;
+                console.error("Google Sign-in Error:", error);
+            }
+        });
+
+        // Event listener for Sign-Out button
+        signOutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                statusMessageElement.textContent = `Sign-out Error: ${error.message}`;
+                console.error("Sign-out Error:", error);
+            }
+        });
+
+    } catch (error) {
+        statusMessageElement.textContent = `Error: ${error.message}`;
+        console.error("Firebase Initialization Error:", error);
+    }
+};
+
+// ... (rest of your profileForm event listener and functions) ...
 
         // Set Firebase log level for debugging purposes.
         setLogLevel('debug');
@@ -342,5 +420,6 @@
     </script>
 </body>
 </html>
+
 
 
