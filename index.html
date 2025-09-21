@@ -128,6 +128,46 @@
                     <label for="skills" class="block text-sm font-medium text-gray-700">Skills/Interests (comma-separated)</label>
                     <input type="text" id="skills" name="skills" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="e.g., JavaScript, React, design, marketing">
                 </div>
+
+                <!-- NEW: Media Upload Fields -->
+                <div class="border-t border-gray-200 pt-4 mt-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Media</h3>
+                    <div class="mt-2">
+                        <label for="headshotFile" class="block text-sm font-medium text-gray-700">Headshot Photo (max 1)</label>
+                        <input type="file" id="headshotFile" name="headshotFile" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        <div id="headshot-preview-container" class="mt-2 hidden">
+                            <img id="headshot-preview" class="w-24 h-24 rounded-full object-cover shadow-lg mx-auto" src="" alt="Headshot Preview">
+                        </div>
+                    </div>
+                    <div id="mentor-video-container" class="mt-4 hidden">
+                        <label for="mentorVideoFile" class="block text-sm font-medium text-gray-700">Mentor Video (30-60s)</label>
+                        <input type="file" id="mentorVideoFile" name="mentorVideoFile" accept="video/mp4,video/quicktime" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        <div id="video-preview-container" class="mt-2 hidden">
+                            <video id="video-preview" controls class="w-full rounded-lg shadow-lg"></video>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW: Mentor Preference Fields -->
+                <div id="mentor-preferences-container" class="border-t border-gray-200 pt-4 mt-4 hidden">
+                    <h3 class="text-lg font-semibold text-gray-800">Mentoring Preferences</h3>
+                    <div class="mt-2">
+                        <label for="genderPreference" class="block text-sm font-medium text-gray-700">Preferred Gender of Mentee</label>
+                        <select id="genderPreference" name="genderPreference" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="any">Any</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700">Preferred Mentee Age Range</label>
+                        <div class="flex space-x-2 mt-1">
+                            <input type="number" id="minAge" name="minAge" class="block w-1/2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Min Age" min="0" max="100">
+                            <input type="number" id="maxAge" name="maxAge" class="block w-1/2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Max Age" min="0" max="100">
+                        </div>
+                    </div>
+                </div>
+
                 <div id="profile-validation-message" class="text-sm text-red-500 text-center font-bold"></div>
                 <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     Save Profile
@@ -158,6 +198,7 @@
             signOut 
         } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, collection, query } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
 
         // Set Firebase log level for debugging purposes.
         setLogLevel('debug');
@@ -166,12 +207,12 @@
         // You can find this in your Firebase Project Settings under "Your apps".
         // Make sure to enable the Auth and Firestore services for your project.
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
+            apiKey: "AIzaSyApkQJrJHsSRjd9tC2x21EdN_2IqWYKRxQ",
+            authDomain: "wementor-app-cfce5.firebaseapp.com",
             projectId: "wementor-app-cfce5",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            storageBucket: "wementor-app-cfce5.appspot.com",
+            messagingSenderId: "31838724730",
+            appId: "1:31838724730:web:3184b080194938a11751c3"
         };
         // ---------------------------------------------
         
@@ -181,6 +222,7 @@
         let app;
         let auth;
         let db;
+        let storage;
         let userId;
 
         // Get references to the HTML elements for both auth and app sections
@@ -203,24 +245,37 @@
         const toggleAuthModeButton = document.getElementById('toggle-auth-mode');
         const googleAuthButton = document.getElementById('google-auth-button');
         const signOutButton = document.getElementById('sign-out-button');
+        const mentorVideoContainer = document.getElementById('mentor-video-container');
+        const mentorPreferencesContainer = document.getElementById('mentor-preferences-container');
+        const headshotPreview = document.getElementById('headshot-preview');
+        const headshotPreviewContainer = document.getElementById('headshot-preview-container');
+        const videoPreview = document.getElementById('video-preview');
+        const videoPreviewContainer = document.getElementById('video-preview-container');
         
         let isSignInMode = true;
 
         // Function to handle the visibility and content of the conditional role description field
         function handleRoleChange() {
             const selectedRole = roleSelect.value;
+            // Show/hide role-specific fields
             if (selectedRole === 'mentor') {
                 roleDescriptionContainer.classList.remove('hidden');
+                mentorVideoContainer.classList.remove('hidden');
+                mentorPreferencesContainer.classList.remove('hidden');
                 roleDescriptionLabel.textContent = 'Describe the impact you want to have on your mentees';
                 roleDescriptionInput.placeholder = 'e.g., help new developers find their first job, guide students with their college applications';
                 roleDescriptionInput.required = true;
             } else if (selectedRole === 'mentee_18_plus' || selectedRole === 'parent_of_mentee') {
                 roleDescriptionContainer.classList.remove('hidden');
+                mentorVideoContainer.classList.add('hidden');
+                mentorPreferencesContainer.classList.add('hidden');
                 roleDescriptionLabel.textContent = 'Describe what you are looking for in a mentor';
                 roleDescriptionInput.placeholder = 'e.g., simple relationship, bible knowledge, or specific skills?';
                 roleDescriptionInput.required = true;
             } else {
                 roleDescriptionContainer.classList.add('hidden');
+                mentorVideoContainer.classList.add('hidden');
+                mentorPreferencesContainer.classList.add('hidden');
                 roleDescriptionInput.required = false;
                 roleDescriptionInput.value = '';
             }
@@ -291,6 +346,7 @@
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
+                storage = getStorage(app);
 
                 // This listener will fire whenever the user's sign-in state changes.
                 onAuthStateChanged(auth, async (user) => {
@@ -319,6 +375,23 @@
                                 document.getElementById('skills').value = data.skills ? data.skills.join(', ') : '';
                                 handleRoleChange();
                                 document.getElementById('role-description').value = data.roleDescription || '';
+                                document.getElementById('genderPreference').value = (data.preferences && data.preferences.gender) || 'any';
+                                document.getElementById('minAge').value = (data.preferences && data.preferences.ageRange && data.preferences.ageRange.min) || '';
+                                document.getElementById('maxAge').value = (data.preferences && data.preferences.ageRange && data.preferences.ageRange.max) || '';
+                                
+                                // Update media previews
+                                if (data.headshotUrl) {
+                                    headshotPreview.src = data.headshotUrl;
+                                    headshotPreviewContainer.classList.remove('hidden');
+                                } else {
+                                    headshotPreviewContainer.classList.add('hidden');
+                                }
+                                if (data.videoUrl) {
+                                    videoPreview.src = data.videoUrl;
+                                    videoPreviewContainer.classList.remove('hidden');
+                                } else {
+                                    videoPreviewContainer.classList.add('hidden');
+                                }
                             }
                         });
 
@@ -364,6 +437,8 @@
                 return;
             }
 
+            profileValidationMessageElement.textContent = 'Saving profile...';
+
             // Get form data
             const firstName = document.getElementById('firstName').value;
             const lastName = document.getElementById('lastName').value;
@@ -371,9 +446,13 @@
             const role = document.getElementById('role').value;
             const skills = document.getElementById('skills').value.split(',').map(s => s.trim()).filter(s => s.length > 0);
             const roleDescription = document.getElementById('role-description').value;
+            const headshotFile = document.getElementById('headshotFile').files[0];
+            const mentorVideoFile = document.getElementById('mentorVideoFile').files[0];
+            const genderPreference = document.getElementById('genderPreference').value;
+            const minAge = document.getElementById('minAge').value;
+            const maxAge = document.getElementById('maxAge').value;
 
             // Age verification
-            profileValidationMessageElement.textContent = ''; // Clear previous messages
             const age = calculateAge(dob);
 
             if (role === 'mentor' && age < 25) {
@@ -388,29 +467,74 @@
                 profileValidationMessageElement.textContent = 'You must be at least 18 years old to sign up as a parent.';
                 return;
             }
-
-            const profileData = {
-                firstName,
-                lastName,
-                dob,
-                age,
-                role,
-                skills,
-                roleDescription,
-                userId: userId,
-                lastUpdated: new Date().toISOString()
-            };
-
-            // The collection path is now private and user-specific as per best practices
-            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/profiles`, userId);
+            
             try {
+                let headshotUrl = '';
+                let videoUrl = '';
+                
+                const uploadPromises = [];
+
+                if (headshotFile) {
+                    const headshotRef = ref(storage, `artifacts/${appId}/users/${userId}/files/${headshotFile.name}`);
+                    uploadPromises.push(uploadBytes(headshotRef, headshotFile).then(snapshot => getDownloadURL(snapshot.ref)));
+                }
+
+                if (role === 'mentor' && mentorVideoFile) {
+                    const videoRef = ref(storage, `artifacts/${appId}/users/${userId}/files/${mentorVideoFile.name}`);
+                    uploadPromises.push(uploadBytes(videoRef, mentorVideoFile).then(snapshot => getDownloadURL(snapshot.ref)));
+                }
+                
+                const urls = await Promise.all(uploadPromises);
+
+                if (headshotFile) {
+                    headshotUrl = urls.shift();
+                }
+                if (role === 'mentor' && mentorVideoFile) {
+                    videoUrl = urls.shift();
+                }
+
+                const profileData = {
+                    firstName,
+                    lastName,
+                    dob,
+                    age,
+                    role,
+                    skills,
+                    roleDescription,
+                    userId: userId,
+                    lastUpdated: new Date().toISOString()
+                };
+
+                if (headshotUrl) {
+                    profileData.headshotUrl = headshotUrl;
+                }
+                if (videoUrl) {
+                    profileData.videoUrl = videoUrl;
+                }
+
+                // Add mentor-specific preferences if applicable
+                if (role === 'mentor') {
+                    profileData.preferences = {
+                        gender: genderPreference,
+                        ageRange: {
+                            min: minAge ? parseInt(minAge, 10) : null,
+                            max: maxAge ? parseInt(maxAge, 10) : null
+                        }
+                    };
+                }
+
+                const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/profiles`, userId);
+                const publicDocRef = doc(db, `artifacts/${appId}/public/data/profiles`, userId);
+
                 await setDoc(userDocRef, profileData);
+                await setDoc(publicDocRef, profileData); // Save to public collection for other users to see
+
                 profileValidationMessageElement.textContent = '';
                 statusMessageElement.textContent = "Profile saved successfully!";
                 console.log("Profile saved for user:", userId);
             } catch (e) {
                 statusMessageElement.textContent = `Error saving profile: ${e.message}`;
-                console.error("Error adding document: ", e);
+                console.error("Error saving document: ", e);
             }
         });
 
@@ -440,14 +564,37 @@
                     profiles.forEach(profile => {
                         const roleText = profile.role === 'mentor' ? 'Mentor' : (profile.role === 'mentee_18_plus' ? 'Mentee (18+)' : 'Parent of Mentee');
                         const roleDescription = profile.role === 'mentor' ? `Impact: ${profile.roleDescription}` : `Seeking: ${profile.roleDescription}`;
+                        
+                        let mentorPreferencesHtml = '';
+                        if (profile.role === 'mentor' && profile.preferences) {
+                            const genderPref = profile.preferences.gender || 'Any';
+                            const minAge = profile.preferences.ageRange.min || 'N/A';
+                            const maxAge = profile.preferences.ageRange.max || 'N/A';
+                            mentorPreferencesHtml = `
+                                <div class="mt-2 text-xs text-gray-500">
+                                    <p>Prefers: <span class="font-bold">${genderPref}</span> mentees aged <span class="font-bold">${minAge} to ${maxAge}</span></p>
+                                </div>
+                            `;
+                        }
+
+                        let mediaHtml = '';
+                        if (profile.headshotUrl) {
+                            mediaHtml += `<img src="${profile.headshotUrl}" alt="Headshot" class="w-16 h-16 rounded-full object-cover shadow-sm mx-auto mb-2">`;
+                        }
+                        if (profile.videoUrl) {
+                            mediaHtml += `<video controls src="${profile.videoUrl}" class="w-full rounded-lg shadow-sm mb-2"></video>`;
+                        }
+
                         const profileCard = document.createElement('div');
-                        profileCard.className = 'bg-white p-4 rounded-md shadow border border-gray-200';
+                        profileCard.className = 'bg-white p-4 rounded-md shadow border border-gray-200 text-center';
                         profileCard.innerHTML = `
+                            ${mediaHtml}
                             <h3 class="font-bold text-lg text-gray-800">${profile.firstName} ${profile.lastName}</h3>
                             <p class="text-sm text-gray-600">${roleText}</p>
                             <p class="text-sm text-gray-600">Age: ${profile.age}</p>
                             <p class="text-xs text-gray-500 mt-2">Skills: ${profile.skills.join(', ') || 'None'}</p>
                             <p class="text-xs text-gray-500 mt-2 italic">${roleDescription || ''}</p>
+                            ${mentorPreferencesHtml}
                             <p class="text-xs text-gray-400 mt-2 break-all">User ID: ${profile.userId}</p>
                         `;
                         usersList.appendChild(profileCard);
