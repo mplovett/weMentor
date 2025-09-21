@@ -229,11 +229,7 @@
                 });
 
                 // Attempt to sign in using the provided custom token, or anonymously if not available.
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+               
 
             } catch (error) {
                 statusMessageElement.textContent = `Error: ${error.message}`;
@@ -355,4 +351,5 @@
     </script>
 </body>
 </html>
+
 
