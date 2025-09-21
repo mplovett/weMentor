@@ -330,101 +330,99 @@
             }
         });
 
-        // The main application startup function
-        window.onload = async function() {
-            try {
-                // Initialize Firebase services
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                storage = getStorage(app);
-                
-                // Sign in the user with the provided token or anonymously if not available.
-                // This is crucial for seamless app functionality in the collaborative environment.
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                // This listener will fire whenever the user's sign-in state changes.
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        // User is signed in. Hide auth UI and show app UI.
-                        authContainer.classList.add('hidden');
-                        appContainer.classList.remove('hidden');
-
-                        userId = user.uid;
-                        statusMessageElement.textContent = "Signed in successfully!";
-                        userIdElement.textContent = userId;
-                        console.log("User signed in with ID:", userId);
-
-                        // If there's an old listener, detach it before creating a new one
-                        if (unsubscribeFromProfiles) {
-                            unsubscribeFromProfiles();
-                        }
-                        
-                        // Start listening to the database for user profiles
-                        startListeningForProfiles();
-                        
-                        // Check if a profile already exists for the current user and pre-fill the form
-                        const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/profiles`, userId);
-                        onSnapshot(userDocRef, (docSnap) => {
-                            if (docSnap.exists()) {
-                                const data = docSnap.data();
-                                document.getElementById('firstName').value = data.firstName || '';
-                                document.getElementById('lastName').value = data.lastName || '';
-                                document.getElementById('dob').value = data.dob || '';
-                                document.getElementById('role').value = data.role || '';
-                                document.getElementById('skills').value = data.skills ? data.skills.join(', ') : '';
-                                handleRoleChange();
-                                document.getElementById('role-description').value = data.roleDescription || '';
-                                document.getElementById('genderPreference').value = (data.preferences && data.preferences.gender) || 'any';
-                                document.getElementById('minAge').value = (data.preferences && data.preferences.ageRange && data.preferences.ageRange.min) || '';
-                                document.getElementById('maxAge').value = (data.preferences && data.preferences.ageRange && data.preferences.ageRange.max) || '';
-                                
-                                // Update media previews
-                                if (data.headshotUrl) {
-                                    headshotPreview.src = data.headshotUrl;
-                                    headshotPreviewContainer.classList.remove('hidden');
-                                } else {
-                                    headshotPreviewContainer.classList.add('hidden');
-                                }
-                                if (data.videoUrl) {
-                                    videoPreview.src = data.videoUrl;
-                                    videoPreviewContainer.classList.remove('hidden');
-                                } else {
-                                    videoPreviewContainer.classList.add('hidden');
-                                }
-                            }
-                        });
-
-                    } else {
-                        // User is signed out. Show auth UI and hide app UI.
-                        appContainer.classList.add('hidden');
-                        authContainer.classList.remove('hidden');
-
-                        statusMessageElement.textContent = "Signed out or not signed in.";
-                        userIdElement.textContent = "No user authenticated.";
-                        console.log("User signed out.");
-
-                        // Detach the profiles listener when the user signs out
-                        if (unsubscribeFromProfiles) {
-                            unsubscribeFromProfiles();
-                            unsubscribeFromProfiles = null;
-                        }
-                        
-                        // Clear the UI when the user is signed out
-                        profileForm.reset();
-                        usersList.innerHTML = `<p id="no-users-message" class="text-gray-500 text-center italic">Please sign in to view profiles.</p>`;
-                    }
-                });
-
-            } catch (error) {
-                statusMessageElement.textContent = `Error: ${error.message}`;
-                console.error("Firebase Initialization Error:", error);
+        // The main application startup logic
+        try {
+            // Initialize Firebase services
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            storage = getStorage(app);
+            
+            // Sign in the user with the provided token or anonymously if not available.
+            // This is crucial for seamless app functionality in the collaborative environment.
+            if (initialAuthToken) {
+                await signInWithCustomToken(auth, initialAuthToken);
+            } else {
+                await signInAnonymously(auth);
             }
-        };
+
+            // This listener will fire whenever the user's sign-in state changes.
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    // User is signed in. Hide auth UI and show app UI.
+                    authContainer.classList.add('hidden');
+                    appContainer.classList.remove('hidden');
+
+                    userId = user.uid;
+                    statusMessageElement.textContent = "Signed in successfully!";
+                    userIdElement.textContent = userId;
+                    console.log("User signed in with ID:", userId);
+
+                    // If there's an old listener, detach it before creating a new one
+                    if (unsubscribeFromProfiles) {
+                        unsubscribeFromProfiles();
+                    }
+                    
+                    // Start listening to the database for user profiles
+                    startListeningForProfiles();
+                    
+                    // Check if a profile already exists for the current user and pre-fill the form
+                    const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/profiles`, userId);
+                    onSnapshot(userDocRef, (docSnap) => {
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            document.getElementById('firstName').value = data.firstName || '';
+                            document.getElementById('lastName').value = data.lastName || '';
+                            document.getElementById('dob').value = data.dob || '';
+                            document.getElementById('role').value = data.role || '';
+                            document.getElementById('skills').value = data.skills ? data.skills.join(', ') : '';
+                            handleRoleChange();
+                            document.getElementById('role-description').value = data.roleDescription || '';
+                            document.getElementById('genderPreference').value = (data.preferences && data.preferences.gender) || 'any';
+                            document.getElementById('minAge').value = (data.preferences && data.preferences.ageRange && data.preferences.ageRange.min) || '';
+                            document.getElementById('maxAge').value = (data.preferences && data.preferences.ageRange && data.preferences.ageRange.max) || '';
+                            
+                            // Update media previews
+                            if (data.headshotUrl) {
+                                headshotPreview.src = data.headshotUrl;
+                                headshotPreviewContainer.classList.remove('hidden');
+                            } else {
+                                headshotPreviewContainer.classList.add('hidden');
+                            }
+                            if (data.videoUrl) {
+                                videoPreview.src = data.videoUrl;
+                                videoPreviewContainer.classList.remove('hidden');
+                            } else {
+                                videoPreviewContainer.classList.add('hidden');
+                            }
+                        }
+                    });
+
+                } else {
+                    // User is signed out. Show auth UI and hide app UI.
+                    appContainer.classList.add('hidden');
+                    authContainer.classList.remove('hidden');
+
+                    statusMessageElement.textContent = "Signed out or not signed in.";
+                    userIdElement.textContent = "No user authenticated.";
+                    console.log("User signed out.");
+
+                    // Detach the profiles listener when the user signs out
+                    if (unsubscribeFromProfiles) {
+                        unsubscribeFromProfiles();
+                        unsubscribeFromProfiles = null;
+                    }
+                    
+                    // Clear the UI when the user is signed out
+                    profileForm.reset();
+                    usersList.innerHTML = `<p id="no-users-message" class="text-gray-500 text-center italic">Please sign in to view profiles.</p>`;
+                }
+            });
+
+        } catch (error) {
+            statusMessageElement.textContent = `Error: ${error.message}`;
+            console.error("Firebase Initialization Error:", error);
+        }
 
         // Function to calculate age from a date of birth string.
         function calculateAge(dobString) {
@@ -557,61 +555,36 @@
                         profiles.push(data);
                     }
                 });
-
-                // Clear the list and re-render the profiles
+                
                 usersList.innerHTML = '';
                 if (profiles.length === 0) {
-                    noUsersMessage.style.display = 'block';
-                    usersList.appendChild(noUsersMessage);
+                    usersList.innerHTML = `<p id="no-users-message" class="text-gray-500 text-center italic">No profiles found yet. Be the first to create one!</p>`;
                 } else {
-                    noUsersMessage.style.display = 'none';
                     profiles.forEach(profile => {
-                        const roleText = profile.role === 'mentor' ? 'Mentor' : (profile.role === 'mentee_18_plus' ? 'Mentee (18+)' : 'Parent of Mentee');
-                        const roleDescription = profile.role === 'mentor' ? `Impact: ${profile.roleDescription}` : `Seeking: ${profile.roleDescription}`;
+                        const profileCard = document.createElement('div');
+                        profileCard.classList.add('bg-white', 'rounded-lg', 'shadow-md', 'p-4', 'flex', 'items-start', 'space-x-4');
                         
-                        let mentorPreferencesHtml = '';
-                        if (profile.role === 'mentor' && profile.preferences) {
-                            const genderPref = profile.preferences.gender || 'Any';
-                            const minAge = profile.preferences.ageRange.min || 'N/A';
-                            const maxAge = profile.preferences.ageRange.max || 'N/A';
-                            mentorPreferencesHtml = `
-                                <div class="mt-2 text-xs text-gray-500">
-                                    <p>Prefers: <span class="font-bold">${genderPref}</span> mentees aged <span class="font-bold">${minAge} to ${maxAge}</span></p>
-                                </div>
-                            `;
-                        }
-
-                        let mediaHtml = '';
+                        let headshotHtml = '';
                         if (profile.headshotUrl) {
-                            mediaHtml += `<img src="${profile.headshotUrl}" alt="Headshot" class="w-16 h-16 rounded-full object-cover shadow-sm mx-auto mb-2">`;
+                            headshotHtml = `<img src="${profile.headshotUrl}" alt="${profile.firstName}'s Headshot" class="w-16 h-16 rounded-full object-cover">`;
+                        } else {
+                            // Use a placeholder if no headshot is available
+                            headshotHtml = `<div class="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xl font-bold">${profile.firstName.charAt(0).toUpperCase()}</div>`;
                         }
-                        if (profile.videoUrl) {
-                            mediaHtml += `<div class="mt-4"><h4 class="text-sm font-semibold">Intro Video</h4><video controls class="w-full rounded-md mt-1"><source src="${profile.videoUrl}" type="video/mp4"></video></div>`;
-                        }
-
-                        const profileHtml = `
-                            <div class="p-4 border border-gray-200 rounded-md bg-white shadow-sm">
-                                <div class="flex items-center space-x-4">
-                                    ${profile.headshotUrl ? `<img src="${profile.headshotUrl}" alt="Headshot" class="w-16 h-16 rounded-full object-cover shadow-sm">` : `<div class="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 font-bold text-xl">?</div>`}
-                                    <div class="flex-1">
-                                        <h3 class="text-lg font-bold text-gray-800">${profile.firstName} ${profile.lastName}</h3>
-                                        <p class="text-sm text-indigo-600 font-semibold">${roleText}</p>
-                                        <p class="text-sm text-gray-500">User ID: <span class="font-mono">${profile.userId}</span></p>
-                                    </div>
-                                </div>
-                                <div class="mt-4">
-                                    <p class="text-sm text-gray-700 font-semibold">Skills/Interests:</p>
-                                    <p class="text-sm text-gray-600">${profile.skills.join(', ') || 'N/A'}</p>
-                                </div>
-                                <div class="mt-2">
-                                    <p class="text-sm text-gray-700 font-semibold">${profile.role === 'mentor' ? 'Impact Statement' : 'Seeking'}:</p>
-                                    <p class="text-sm text-gray-600">${profile.roleDescription || 'N/A'}</p>
-                                </div>
-                                ${mentorPreferencesHtml}
-                                ${mediaHtml}
+                        
+                        let skillsHtml = profile.skills.map(skill => `<span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${skill}</span>`).join(' ');
+                        
+                        profileCard.innerHTML = `
+                            ${headshotHtml}
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-gray-900">${profile.firstName} ${profile.lastName}</h3>
+                                <p class="text-sm font-medium text-indigo-600">${profile.role}</p>
+                                <p class="text-sm text-gray-600 mt-1">${profile.roleDescription || 'No description provided.'}</p>
+                                <p class="text-xs text-gray-500 mt-1">Age: ${profile.age}</p>
+                                <div class="flex flex-wrap gap-2 mt-2">${skillsHtml}</div>
                             </div>
                         `;
-                        usersList.innerHTML += profileHtml;
+                        usersList.appendChild(profileCard);
                     });
                 }
             });
